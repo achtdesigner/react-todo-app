@@ -1,20 +1,23 @@
 import React, { Component } from 'react';
 import './App.css';
 import Card from '@material-ui/core/Card';
-import TextField from '@material-ui/core/TextField';
 
-import List from '@material-ui/core/List';
-import ListItem from '@material-ui/core/ListItem';
-import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
-import ListItemText from '@material-ui/core/ListItemText';
-import IconButton from '@material-ui/core/IconButton';
-import Icon from '@material-ui/core/Icon';
+import TodoInput from './components/TodoInput';
+import TodoList from './components/TodoList';
+
+// a little function to help us with reordering the result
+const reorder = (list, startIndex, endIndex) => {
+  const result = Array.from(list);
+  const [removed] = result.splice(startIndex, 1);
+  result.splice(endIndex, 0, removed);
+
+  return result;
+};
 
 class App extends Component {
   state = {
     todos: [],
-    idCount: 0,
-    input: ''
+    idCount: 0
   };
 
   // addTodo
@@ -26,8 +29,7 @@ class App extends Component {
       });
       return {
         todos: newTodos,
-        idCount: prevState.idCount + 1,
-        input: ''
+        idCount: prevState.idCount + 1
       };
     });
   };
@@ -40,40 +42,34 @@ class App extends Component {
       };
     });
   };
+
+  onDragEnd = result => {
+    // dropped outside the list
+    if (!result.destination) {
+      return;
+    }
+
+    const todos = reorder(
+      this.state.todos,
+      result.source.index,
+      result.destination.index
+    );
+
+    this.setState({
+      todos
+    });
+  };
+
   render() {
     return (
       <div className="app">
         <Card className="main-container">
-          <TextField
-            id="name"
-            label="Add new Todo"
-            type="text"
-            value={this.state.input}
-            onChange={e => this.setState({ input: e.target.value })}
-            margin="normal"
-            fullWidth
-            onKeyPress={e => {
-              if (e.key === 'Enter' && this.state.input !== '') {
-                this.addTodo(this.state.input);
-              }
-            }}
+          <TodoInput handleSubmit={this.addTodo} />
+          <TodoList
+            data={this.state.todos}
+            handleClick={this.deleteTodo}
+            onDragEnd={this.onDragEnd}
           />
-          <List>
-            {this.state.todos.map(todo => (
-              <ListItem key={todo.id}>
-                <Icon>drag_handle</Icon>
-                <ListItemText primary={todo.name} />
-                <ListItemSecondaryAction>
-                  <IconButton
-                    aria-label="Delete"
-                    onClick={() => this.deleteTodo(todo.id)}
-                  >
-                    <Icon>delete</Icon>
-                  </IconButton>
-                </ListItemSecondaryAction>
-              </ListItem>
-            ))}
-          </List>
         </Card>
       </div>
     );
